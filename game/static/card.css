@@ -1,0 +1,26 @@
+.card {
+    width: 32px;
+    height: 45px;
+    margin: 3px;
+    background-color: #F49700;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid black;
+  }
+  
+  .card span {
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .container {
+    display: flex;
+  }
+  .container-stack {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }

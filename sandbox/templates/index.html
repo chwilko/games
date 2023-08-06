@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Przykład użycia AJAX w Flask</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Witaj w aplikacji Flask z użyciem AJAX!</h1>
+    <input type="text" id="data-input" placeholder="Wprowadź dane">
+    <button id="submit-button">Wyślij dane</button>
+    <div id="result-container"></div>
+
+    <script>
+        $(document).ready(function() {
+            $("#submit-button").click(function() {
+                // Pobieramy dane z pola tekstowego
+                var inputData = $("#data-input").val();
+
+                // Wysyłamy żądanie AJAX do serwera
+                $.ajax({
+                    url: "/ajax_request",
+                    type: "POST",
+                    data: { data: inputData },  // Dane do przesłania do serwera
+                    success: function(response) {
+                        // Przetwarzamy odpowiedź z serwera i wyświetlamy wynik na stronie
+                        $("#result-container").text("Wynik: " + response.result);
+                    },
+                    error: function(error) {
+                        console.log("Wystąpił błąd: ", error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

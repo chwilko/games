@@ -1,0 +1,13 @@
+{% for move in moves %}
+<button>{{ move.no * 4 + 2 }}</button>
+<div class="container-stack">
+    <div class="card" style="z-index: 4; position: absolute;">
+        <span>{{ move.card["value"] }}</span>
+    </div>
+    {% for i in range(1, move.no) %}
+    <div class="card" style="top: {{ i * 10 }}px; left: {{ i * 10 }}px; z-index: {{ move.no - i }}; position: absolute;">
+        <span></span>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
