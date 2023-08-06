@@ -1,38 +1,58 @@
 <!-- pan_page.html -->
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Przykładowa aplikacja Flask</title>
+    <title>Game PAN</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='card.css') }}">
 </head>
+
 <body>
+
+    <h1>
+        {% if result == 1 %}
+        You Win!
+        {% endif %}
+        {% if result == 0 %}
+        You Lose!
+        {% endif %}
+        <form action="/PAN" method="post">
+            <button type="submit" name="move_id" value="-1" style="height: 30px;width: 80px;"> reset </button>
+        </form>
+        <form action="/main_menu" method="post">
+            <button type="submit">Back to main menu.</button>
+        </form>
+
+    </h1>
+
     <h1>Deck:</h1>
     <div class="container" id="deck-container">
-        {% for card in hand %}
+        {% for card in deck %}
         <div class="card">
-            <span>{{ card["value"] }}</span>
+            <span>{{ card }}</span>
         </div>
         {% endfor %}
     </div>
     <h1><br>Your hand:</h1>
     <div class="container" id="hand-container">
-        {% for card in deck %}
+        {% for card in hand %}
         <div class="card">
-            <span>{{ card["value"] }}</span>
+            <span>{{ card }}</span>
         </div>
         {% endfor %}
     </div>
     <h1><br>Your moves:</h1>
     <form action="/PAN" method="post">
-    <div class="container" id="moves-container">
+        <div class="container" id="moves-container">
             {% for move in moves %}
             <button type="submit" name="move_id" value="{{ loop.index }}"> {{ loop.index }} </button>
             <div class="container-stack">
                 <div class="card" style="z-index: 4; position: absolute;">
-                    <span>{{ move["card"]["value"] }}</span>
+                    <span>{{ move["value"] }}</span>
                 </div>
                 {% for i in range(1, move["no"]) %}
-                <div class="card" style="top: {{ i * 10 }}px; left: {{ i * 10 }}px; z-index: {{ move["no"] - i }}; position: absolute;">
+                <div class="card" style="top: {{ i * 10 }}px; left: {{ i * 10 }}px; z-index: {{ move["no"] - i }};
+                    position: absolute;">
                     <span></span>
                 </div>
                 {% endfor %}
@@ -41,4 +61,5 @@
         </div>
     </form>
 </body>
+
 </html>

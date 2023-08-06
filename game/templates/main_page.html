@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Choose game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='card.css') }}">
 </head>
+
 <body>
-<form action="/button_click" method="post">
-    <h1>Choose game!</h1>
-    <button type="submit">PAN</button>
-</form>
+    <form action="/pan_game_start" method="post">
+        <h1>Choose game!</h1>
+        <label for="game_options"> Difficulty level: </label>
+        <select id="game_options" name="game_value">
+            {% for value in range(5, 16) %}
+            {% if value == 10 %}
+            <option value="{{ value }}" selected>{{ value }}</option>
+            {% else %}
+            <option value="{{ value }}">{{ value }}</option>
+            {% endif %} {% endfor %}
+        </select>
+        <button type="submit">PAN</button>
+    </form>
 </body>
+
 </html>

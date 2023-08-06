@@ -1,80 +1,13 @@
 import os
-# from queue import Queue
-from typing import (
-    Callable,
-    Dict,
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    TypeVar,
-    Union,
-)
-
 import numpy as np
 
-
-def default_setup_fun(x):
-    x[x == 3] = 1.5
-    x[x == 4] = 2.5
-    return x
-
-
-def default_translator(x: int) -> str:
-    tran = ["9", "10", "J", "Q", "K", "A"]
-    return tran[x]
+from queue import Queue
+from typing import Callable, Iterator, List, Optional
+from game.PanGameTree import PanGame, Stack, default_setup_fun, default_translator, identity
+from game.PanGameTree import Node as OldNode
 
 
-T = TypeVar("T")
-
-
-def identity(x):
-    return x
-
-
-class Stack(Generic[T]):
-    def __init__(self, lt: List[T] = None) -> None:
-        if lt is None:
-            self._stack = []
-        else:
-            self._stack = lt
-
-    def push(self, *args) -> None:
-        self._stack.extend(args)
-
-    def peek(self) -> T:
-        return self._stack[-1]
-
-    def peekn(self, n: int = 1) -> List[T]:
-        return self._stack[-n:]
-
-    def pop(self) -> T:
-        return self._stack.pop()
-
-    def popn(self, n: int = 1) -> List[T]:
-        ret = self._stack[-n:]
-        for _ in range(n):
-            self._stack.pop()
-        return ret
-
-    def __len__(self) -> int:
-        return len(self._stack)
-
-    def __str__(self) -> str:
-        return self._stack.__str__()
-
-    def copy(self) -> "Stack":
-        return Stack(self._stack.copy())
-
-    def __iter__(self) -> Iterator[T]:
-        for i in self._stack:
-            yield i
-
-    def __eq__(self, __o) -> bool:
-        return self._stack == __o._stack
-
-
-class Node:
+class Node(OldNode):
     COST_ARRAY = None
     SETUP_FUN = default_setup_fun
     CARD_TRANSLATOR = identity
@@ -100,7 +33,8 @@ class Node:
         self,
         *,
         _round: int,
-        params: Optional[np.ndarray],
+        params,
+        # : np.typing.ArrayLike
         turn: int,
         stack: Optional[Stack[int]] = None,
     ) -> None:
@@ -181,56 +115,78 @@ class Node:
         ret = str(self.params) + "\n" + str(self.turn) + " | " + str(self.cost) + "\n"
         return ret
 
+    def show_stack(self) -> None:
+        for card in self.stack:
+            print(f"{Node.CARD_TRANSLATOR(card)}, ", end="")
+        print()
 
-    def get_stack(self) -> List[str]:
-        return [f"{Node.CARD_TRANSLATOR(card)}" for card in self.stack]
+    def show_hand(self, player: int) -> None:
+        self._translate_show(self.params[player, :])
+        print()
 
-    def get_hand(self, player: int) -> List[str]:
-        cards = []
-        for number, i in enumerate(self.params[player, :]):
-            for _ in range(int(i)):
-                cards.append(
-                    Node.CARD_TRANSLATOR(number)
-                )
-        return cards
-
-
-    def get_diff(self, player, begin) -> List[Dict[str, Union[str, int]]]:
+    def show_diff(self, player, begin):
         table = (begin - self.params)[player, :]
+        self._translate_show(table)
+
+    def _translate_show(self, table):
         for number, i in enumerate(table):
-            if i == 0:
+            for _ in range(int(i)):
+                print(Node.CARD_TRANSLATOR(number), ", ", sep="", end="")
+
+
+
+class TestPanGame(PanGame):
+    def print_tree(self, current_node: Optional[Node] = None):
+        queue: Queue = Queue()
+        if current_node is None:
+            current_node = self.root
+        queue.put(current_node)
+        queue.put("\n")
+        i = 1
+        while not queue.empty():
+            current_node = queue.get()
+            if type(current_node) is str:
+                print(current_node, end="")
+                if queue.empty():
+                    break
+                if current_node == "\n":
+                    i = 1 - i
+                    print(i)
+                    input()
+                    queue.put("\n")
                 continue
-            if i < 0:
-                return {
-                    "value": "Draw",
-                    "no": -int(table.sum())
-                }
-            return {
-                    "value": Node.CARD_TRANSLATOR(number),
-                    "no": int(i)
-                }
+            for child in current_node.children():
+                queue.put(child)
+            queue.put("|")
+        print()
 
 
+    def show_stack(self) -> None:
+        for card in self.root.stack:
+            print(f"{Node.CARD_TRANSLATOR(card)}, ", end="")
+        print()
 
-class PanGame:
     @classmethod
     def play(cls, depth=6):
         Node.gen_cost_array()
         Node.set_card_translator(default_translator)
         pg = cls()
-        pg.user = np.random.randint(0, 2)
-        pg.depth = depth
-        if pg.user != pg.root.turn:
-            pg.make_auto_move(depth)
-        return pg
-
+        user = np.random.randint(0, 2)
+        winner = -1
+        while winner == -1:
+            if user == pg.root.turn:
+                pg.ask_for_move()
+            else:
+                pg.make_auto_move(depth)
+            winner = pg.check()
+        if winner == user:
+            print("You are winner")
+        else:
+            pg.show_stack()
+            print("You lose")
 
     def __init__(
-        self,
-        initial_params=None,
-        *,
-        cards_number: int = 6,
-        colors_number: int = 4,
+        self, initial_params=None, *, cards_number: int = 6, colors_number: int = 4
     ) -> None:
         self.cards_number = cards_number
         self.colors_number = colors_number
@@ -290,9 +246,8 @@ class PanGame:
             if current_node.params[current_node.turn][i] >= 1:
                 new_node = self._move(i, 1, current_node)
                 yield new_node
+
         n = len(current_node.stack) - 1
-        if n <= 0:
-            return
         n = min(n, 3)
         new_stack = current_node.stack.copy()
         cards = new_stack.popn(n)
@@ -301,7 +256,11 @@ class PanGame:
             params=current_node.params
             + sum(
                 [
-                    self._get_mod(current_node.turn, k, 1)
+                    self._get_mod(
+                        current_node.turn,
+                        k,
+                        1,
+                    )
                     for k in cards
                 ]
             ),
@@ -316,9 +275,9 @@ class PanGame:
         ret[player][card] = current_cards_number
         return ret
 
+
     def choose_move(self, n: int):
         self.root = list(self.moves(self.root))[n]
-        self.make_auto_move(self.depth)
 
     def make_auto_move(self, depth: int):
         best = self.min_max(depth=depth)
@@ -328,22 +287,34 @@ class PanGame:
                 return
         print("Woops")
 
-
     def ask_for_move(self):
-        return (
-            self.root.get_stack(),
-            self.root.get_hand(self.user),
-            [move.get_diff(self.user, self.root.params) for move in  self.moves(self.root)],
-            self.check()
-        )
+        os.system("clear")
 
+        self.show_stack()
+        print("Your hand:")
+        self.root.show_hand(self.root.turn)
+        print("_" * 30)
+        for i, move in enumerate(self.moves(self.root)):
+            print(f"move nr: {i}")
+            move.show_diff(self.root.turn, self.root.params)
+            print()
+        while 1:
+            try:
+                a = input("choose your move nr: ")
+                self.choose_move(int(a))
+                break
+            except IndexError:
+                continue
+            except ValueError:
+                if a == "q":
+                    exit()
 
     def check(self):
         ret = self.root.params.sum(axis=1)
         if ret[0] == 0:
-            return int(0 == self.user)
+            return 0
         if ret[1] == 0:
-            return int(1 == self.user)
+            return 1
         return -1
 
     def min_max(self, node: Node = None, depth=4):
@@ -398,23 +369,7 @@ class PanGame:
             return current_min
 
 
-class PGInitializer:
-    instance = None
-    _depth = None
-    def __new__(cls: type, depth: Optional[int]=None):
-        if cls.instance is None:# or hasattr(cls.instance, "pan_game"):
-            depth = depth or cls._depth
-            if depth is None:
-                raise Exception()
-            cls.instance = super().__new__(cls)
-            cls.instance.pan_game = PanGame.play(depth)
-            cls._depth = depth
-        return cls.instance.pan_game
-    
-    @classmethod
-    def reset(cls):
-        cls.instance = None
 
 if __name__ == "__main__":
-    PanGame.play(10)
+    TestPanGame.play(10)
     # Node.gen_cost_array() # ? use property ?
