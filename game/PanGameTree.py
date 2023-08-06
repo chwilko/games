@@ -1,5 +1,3 @@
-import os
-# from queue import Queue
 from typing import (
     Callable,
     Dict,
@@ -33,9 +31,9 @@ def identity(x):
 
 
 class Stack(Generic[T]):
-    def __init__(self, lt: List[T] = None) -> None:
+    def __init__(self, lt: Optional[List[T]] = None) -> None:
         if lt is None:
-            self._stack = []
+            self._stack: List[T] = []
         else:
             self._stack = lt
 
@@ -100,7 +98,7 @@ class Node:
         self,
         *,
         _round: int,
-        params: Optional[np.ndarray],
+        params: np.ndarray,
         turn: int,
         stack: Optional[Stack[int]] = None,
     ) -> None:
@@ -181,7 +179,6 @@ class Node:
         ret = str(self.params) + "\n" + str(self.turn) + " | " + str(self.cost) + "\n"
         return ret
 
-
     def get_stack(self) -> List[str]:
         return [f"{Node.CARD_TRANSLATOR(card)}" for card in self.stack]
 
@@ -189,27 +186,18 @@ class Node:
         cards = []
         for number, i in enumerate(self.params[player, :]):
             for _ in range(int(i)):
-                cards.append(
-                    Node.CARD_TRANSLATOR(number)
-                )
+                cards.append(Node.CARD_TRANSLATOR(number))
         return cards
 
-
-    def get_diff(self, player, begin) -> List[Dict[str, Union[str, int]]]:
+    def get_diff(self, player, begin) -> Dict[str, Union[str, int]]:
         table = (begin - self.params)[player, :]
         for number, i in enumerate(table):
             if i == 0:
                 continue
             if i < 0:
-                return {
-                    "value": "Draw",
-                    "no": -int(table.sum())
-                }
-            return {
-                    "value": Node.CARD_TRANSLATOR(number),
-                    "no": int(i)
-                }
-
+                return {"value": "Draw", "no": -int(table.sum())}
+            return {"value": Node.CARD_TRANSLATOR(number), "no": int(i)}
+        raise Exception()
 
 
 class PanGame:
@@ -217,21 +205,22 @@ class PanGame:
     def play(cls, depth=6):
         Node.gen_cost_array()
         Node.set_card_translator(default_translator)
-        pg = cls()
-        pg.user = np.random.randint(0, 2)
-        pg.depth = depth
+        pg = cls(np.random.randint(0, 2), depth)
         if pg.user != pg.root.turn:
             pg.make_auto_move(depth)
         return pg
 
-
     def __init__(
         self,
+        user,
+        depth,
         initial_params=None,
         *,
         cards_number: int = 6,
         colors_number: int = 4,
     ) -> None:
+        self.user = user
+        self.depth = depth
         self.cards_number = cards_number
         self.colors_number = colors_number
         if initial_params is None:
@@ -299,12 +288,7 @@ class PanGame:
         new_node = Node(
             _round=current_node.round,
             params=current_node.params
-            + sum(
-                [
-                    self._get_mod(current_node.turn, k, 1)
-                    for k in cards
-                ]
-            ),
+            + sum([self._get_mod(current_node.turn, k, 1) for k in cards]),
             turn=1 - current_node.turn,
             stack=new_stack,
         )
@@ -328,15 +312,16 @@ class PanGame:
                 return
         print("Woops")
 
-
     def ask_for_move(self):
         return (
             self.root.get_stack(),
             self.root.get_hand(self.user),
-            [move.get_diff(self.user, self.root.params) for move in  self.moves(self.root)],
-            self.check()
+            [
+                move.get_diff(self.user, self.root.params)
+                for move in self.moves(self.root)
+            ],
+            self.check(),
         )
-
 
     def check(self):
         ret = self.root.params.sum(axis=1)
@@ -346,7 +331,7 @@ class PanGame:
             return int(1 == self.user)
         return -1
 
-    def min_max(self, node: Node = None, depth=4):
+    def min_max(self, node: Optional[Node] = None, depth: int = 4):
         if node is None:
             node = self.root
         self._min_max(
@@ -401,20 +386,24 @@ class PanGame:
 class PGInitializer:
     instance = None
     _depth = None
-    def __new__(cls: type, depth: Optional[int]=None):
-        if cls.instance is None:# or hasattr(cls.instance, "pan_game"):
+
+    def __new__(cls, depth: Optional[int] = None):
+        if cls.instance is None:  # or hasattr(cls.instance, "pan_game"):
             depth = depth or cls._depth
             if depth is None:
                 raise Exception()
             cls.instance = super().__new__(cls)
-            cls.instance.pan_game = PanGame.play(depth)
+            cls.instance.__init__(depth)
             cls._depth = depth
-        return cls.instance.pan_game
-    
+        return cls.instance
+
+    def __init__(self, depth) -> None:
+        self.pan_game = PanGame.play(depth)
+
     @classmethod
     def reset(cls):
         cls.instance = None
 
+
 if __name__ == "__main__":
     PanGame.play(10)
-    # Node.gen_cost_array() # ? use property ?

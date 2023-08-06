@@ -1,10 +1,17 @@
 import os
-import numpy as np
-
 from queue import Queue
 from typing import Callable, Iterator, List, Optional
-from game.PanGameTree import PanGame, Stack, default_setup_fun, default_translator, identity
-from game.PanGameTree import Node as OldNode
+
+import numpy as np
+
+from game.PanGameTree import (
+    Node as OldNode,
+    PanGame,
+    Stack,
+    default_setup_fun,
+    default_translator,
+    identity,
+)
 
 
 class Node(OldNode):
@@ -134,7 +141,6 @@ class Node(OldNode):
                 print(Node.CARD_TRANSLATOR(number), ", ", sep="", end="")
 
 
-
 class TestPanGame(PanGame):
     def print_tree(self, current_node: Optional[Node] = None):
         queue: Queue = Queue()
@@ -159,7 +165,6 @@ class TestPanGame(PanGame):
                 queue.put(child)
             queue.put("|")
         print()
-
 
     def show_stack(self) -> None:
         for card in self.root.stack:
@@ -275,7 +280,6 @@ class TestPanGame(PanGame):
         ret[player][card] = current_cards_number
         return ret
 
-
     def choose_move(self, n: int):
         self.root = list(self.moves(self.root))[n]
 
@@ -367,7 +371,6 @@ class TestPanGame(PanGame):
                 if beta <= alpha:
                     break
             return current_min
-
 
 
 if __name__ == "__main__":

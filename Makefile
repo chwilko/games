@@ -17,4 +17,5 @@ debug: open_page
 sandbox_run:
 	flask --app sandbox.app run
 
-
+lint:
+	bash lint.sh
