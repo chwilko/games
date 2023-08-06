@@ -1,49 +1,44 @@
+<!-- pan_page.html -->
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Przykładowa aplikacja Flask</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='card.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-
 <body>
     <h1>Deck:</h1>
     <div class="container" id="deck-container">
-        <!-- Deck cards will be loaded here via Ajax -->
+        {% for card in hand %}
+        <div class="card">
+            <span>{{ card["value"] }}</span>
+        </div>
+        {% endfor %}
     </div>
     <h1><br>Your hand:</h1>
     <div class="container" id="hand-container">
-        <!-- Hand cards will be loaded here via Ajax -->
+        {% for card in deck %}
+        <div class="card">
+            <span>{{ card["value"] }}</span>
+        </div>
+        {% endfor %}
     </div>
-
     <h1><br>Your moves:</h1>
+    <form action="/PAN" method="post">
     <div class="container" id="moves-container">
-        <!-- Moves will be loaded here via Ajax -->
-    </div>
-
-    <script>
-        // Function to load "deck", "hand", and "moves" via Ajax
-        function loadContent() {
-            $.ajax({
-                url: '/get_content',
-                type: 'GET',
-                success: function (data) {
-                    $('#deck-container').html(data.deck);
-                    $('#hand-container').html(data.hand);
-                    $('#moves-container').html(data.moves);
-                },
-                error: function (error) {
-                    console.log(error);
-                }
-            });
-        }
-
-        // Call loadContent function on page load
-        $(document).ready(function () {
-            loadContent();
-        });
-    </script>
+            {% for move in moves %}
+            <button type="submit" name="move_id" value="{{ loop.index }}"> {{ loop.index }} </button>
+            <div class="container-stack">
+                <div class="card" style="z-index: 4; position: absolute;">
+                    <span>{{ move["card"]["value"] }}</span>
+                </div>
+                {% for i in range(1, move["no"]) %}
+                <div class="card" style="top: {{ i * 10 }}px; left: {{ i * 10 }}px; z-index: {{ move["no"] - i }}; position: absolute;">
+                    <span></span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </form>
 </body>
-
 </html>
