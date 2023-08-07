@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PAN rules</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='card.css') }}">
+</head>
+
+<body>
+    <h1>PAN</h1>
+    Pan is a card game of Polish origin, using a small French pack (cards from 9 to A are used).<br>
+    Whoever gets rid of their cards first wins the game but one can play only cards<br>
+    of higher or equal value than the one at the top of the stack.<br>
+    <br>
+    <h1>Rules:</h1>
+    <br>
+    All cards are dealt evenly to each of the players.<br>
+    The player that gets nine of Hearts starts the game by placing the card at the stack.<br>
+    Then the next player can play one, three or four cards of the same value, provided that they<br>
+    are of equal or higher value than the card at the top of the stack.<br>
+    If one can't play anything or they don't want to, they have to take three cards from the stack.<br>
+    If there are three cards or less at the stack,<br>
+    then the player has to take all the cards but the nine of Hearts at the bottom.<br><br>
+
+    <form action="/main_menu" method="get">
+        <button type="submit">Back to main menu.</button>
+    </form>
+
+</body>
+
+</html>

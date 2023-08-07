@@ -12,6 +12,10 @@ from typing import (
 import numpy as np
 
 
+class GameNotInitializedException(Exception):
+    pass
+
+
 def default_setup_fun(x):
     x[x == 3] = 1.5
     x[x == 4] = 2.5
@@ -197,7 +201,7 @@ class Node:
             if i < 0:
                 return {"value": "Draw", "no": -int(table.sum())}
             return {"value": Node.CARD_TRANSLATOR(number), "no": int(i)}
-        raise Exception()
+        return {"value": "Draw", "no": 0}
 
 
 class PanGame:
@@ -388,17 +392,14 @@ class PGInitializer:
     _depth = None
 
     def __new__(cls, depth: Optional[int] = None):
-        if cls.instance is None:  # or hasattr(cls.instance, "pan_game"):
+        if cls.instance is None:
             depth = depth or cls._depth
             if depth is None:
-                raise Exception()
+                raise GameNotInitializedException()
             cls.instance = super().__new__(cls)
-            cls.instance.__init__(depth)
             cls._depth = depth
+            cls.instance.pan_game = PanGame.play(depth)  # type: ignore
         return cls.instance
-
-    def __init__(self, depth) -> None:
-        self.pan_game = PanGame.play(depth)
 
     @classmethod
     def reset(cls):
